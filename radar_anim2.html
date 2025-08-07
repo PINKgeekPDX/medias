@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arena Watcher - ULTRA Enhanced</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: transparent;
+            overflow: hidden;
+            font-family: 'Arial', sans-serif;
+            opacity: 0;
+            transition: opacity 4s ease-in-out;
+        }
+
+        .radar-container {
+            position: relative;
+            width: 800px;
+            height: 800px;
+            z-index: 1;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(0, 255, 255, 0.1) 0%, rgba(0, 20, 40, 0.95) 70%);
+            border: 3px solid rgba(0, 255, 255, 0.8);
+            box-shadow: 
+                0 0 40px rgba(0, 255, 255, 0.5),
+                inset 0 0 40px rgba(0, 255, 255, 0.2),
+                0 0 80px rgba(0, 255, 255, 0.3),
+                inset 0 0 80px rgba(0, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .radar-container canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 2;
+            background: transparent;
+            border-radius: 50%;
+        }
+
+        .radar-container img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 3;
+            width: 100%;
+            height: 100%;
+            opacity: 0.4;
+            border-radius: 50%;
+            animation: gridShimmer 8s ease-in-out infinite;
+            filter: brightness(1.2) contrast(1.1);
+        }
+
+        @keyframes gridShimmer {
+            0%, 100% { 
+                opacity: 0.5;
+                filter: brightness(1.3) contrast(1.2) hue-rotate(0deg) drop-shadow(0 0 10px rgba(0, 255, 255, 0.3));
+            }
+            50% { 
+                opacity: 0.7;
+                filter: brightness(1.5) contrast(1.4) hue-rotate(25deg) drop-shadow(0 0 20px rgba(0, 255, 255, 0.5));
+            }
+        }
+
+        .radar-text-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 800px;
+            height: 800px;
+            z-index: 10;
+        }
+
+        .radar-text-container canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 11;
+            background: transparent;
+        }
+
+        .radar-text-container img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 12;
+            width: 100%;
+            height: 100%;
+            opacity: 0.85;
+            animation: textRadiance 12s ease-in-out infinite;
+            filter: drop-shadow(0 0 20px rgba(0, 255, 255, 0.8)) drop-shadow(0 0 40px rgba(0, 255, 255, 0.4));
+        }
+
+        @keyframes textRadiance {
+            0%, 100% { 
+                filter: drop-shadow(0 0 20px rgba(0, 255, 255, 0.8)) drop-shadow(0 0 40px rgba(0, 255, 255, 0.4));
+                opacity: 0.85;
+            }
+            50% { 
+                filter: drop-shadow(0 0 30px rgba(0, 255, 255, 1)) drop-shadow(0 0 60px rgba(0, 255, 255, 0.6));
+                opacity: 0.95;
+            }
+        }
+
+        .ultra-effects {
+            position: absolute;
+            top: -150px;
+            left: -150px;
+            width: 1100px;
+            height: 1100px;
+            z-index: 0;
+            pointer-events: none;
+            border-radius: 50%;
+            background: 
+                radial-gradient(circle at 20% 20%, rgba(0, 255, 255, 0.08) 0%, transparent 40%),
+                radial-gradient(circle at 80% 20%, rgba(0, 128, 255, 0.06) 0%, transparent 40%),
+                radial-gradient(circle at 20% 80%, rgba(0, 255, 128, 0.04) 0%, transparent 40%),
+                radial-gradient(circle at 80% 80%, rgba(0, 64, 255, 0.05) 0%, transparent 40%),
+                radial-gradient(circle at center, 
+                    transparent 45%, 
+                    rgba(0, 255, 255, 0.03) 65%, 
+                    rgba(0, 64, 128, 0.05) 80%, 
+                    rgba(0, 255, 255, 0.08) 100%);
+            animation: ultraRotate 25s linear infinite;
+        }
+
+        @keyframes ultraRotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .quantum-overlay {
+            position: absolute;
+            top: -100px;
+            left: -100px;
+            width: 1000px;
+            height: 1000px;
+            z-index: 15;
+            pointer-events: none;
+            border-radius: 50%;
+            background: 
+                conic-gradient(from 0deg, 
+                    transparent 0deg, 
+                    rgba(0, 255, 255, 0.02) 90deg, 
+                    rgba(0, 128, 255, 0.03) 180deg, 
+                    rgba(0, 255, 128, 0.02) 270deg, 
+                    transparent 360deg);
+            animation: quantumSpin 45s linear infinite reverse;
+            opacity: 0.6;
+        }
+
+        @keyframes quantumSpin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="radar-container">
+        <canvas id="radarCanvas" width="800" height="800"></canvas>
+        <img src="grid.png" alt="Ultra Radar Grid" width="800" height="800">
+        
+        <div class="radar-text-container">
+            <canvas id="radarTextCanvas" width="800" height="800"></canvas>
+            <img src="text1.PNG" alt="Ultra Radar Text" width="800" height="800">
+        </div>
+        
+        <div class="ultra-effects"></div>
+        <div class="quantum-overlay"></div>
+    </div>
+    <script>
+        // ULTRA ENHANCED RADAR - COMBINING BEST OF _0 AND _1
+        const canvas = document.getElementById('radarCanvas');
+        const ctx = canvas.getContext('2d');
+        const textCanvas = document.getElementById('radarTextCanvas');
+        const textCtx = textCanvas.getContext('2d');
+
+        const centerX = 400;
+        const centerY = 400;
+        const maxRadius = 380;
+
+        let time = 0;
+        let rotation = 0;
+        let sweepTrail = [];
+        let ultraBlips = [];
+        let interferenceNoise = [];
+        let scanPulses = [];
+        let holographicEffects = [];
+
+        // ULTRA COLOR PALETTE - HYBRID CYAN/MILITARY
+        const ultraColors = {
+            primary: '#00FFFF',      // Ultra cyan
+            secondary: '#0080FF',    // Electric blue
+            accent: '#00FF80',       // Mint green
+            bright: '#FFFFFF',       // Pure white
+            warning: '#FF6600',      // Orange alert
+            critical: '#FF0040',     // Red alert
+            grid: '#003366',         // Dark grid
+            sweep: '#00FFFF',        // Sweep cyan
+            background: '#001122',   // Deep background
+            hologram: '#00FFFF'      // Holographic
+        };
+
+        // ULTRA BLIP CLASS - HYBRID REALISM
+        class UltraBlip {
+            constructor() {
+                const angle = Math.random() * Math.PI * 2;
+                const distance = Math.random() * maxRadius * 0.85;
+                this.x = centerX + Math.cos(angle) * distance;
+                this.y = centerY + Math.sin(angle) * distance;
+                
+                this.size = Math.random() * 4 + 2;
+                this.intensity = 1.0;
+                this.fadeRate = Math.random() * 0.006 + 0.002;
+                this.pulsePhase = Math.random() * Math.PI * 2;
+                this.type = Math.random() < 0.15 ? 'critical' : (Math.random() < 0.35 ? 'warning' : 'normal');
+                this.vx = (Math.random() - 0.5) * 0.8;
+                this.vy = (Math.random() - 0.5) * 0.8;
+                this.trail = [];
+            }
+
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.intensity -= this.fadeRate;
+                this.pulsePhase += 0.15;
+                
+                // Add trail points
+                if (Math.random() < 0.3) {
+                    this.trail.push({
+                        x: this.x,
+                        y: this.y,
+                        life: 1.0,
+                        size: this.size * 0.7
+                    });
+                }
+                
+                // Update trail
+                this.trail = this.trail.filter(point => {
+                    point.life -= 0.02;
+                    return point.life > 0;
+                });
+                
+                const distFromCenter = Math.sqrt((this.x - centerX) ** 2 + (this.y - centerY) ** 2);
+                if (distFromCenter > maxRadius) {
+                    this.intensity = 0;
+                }
+            }
+
+            draw() {
+                const pulse = Math.sin(this.pulsePhase) * 0.4 + 0.8;
+                const alpha = this.intensity * pulse;
+                
+                let color = ultraColors.primary;
+                if (this.type === 'warning') color = ultraColors.warning;
+                if (this.type === 'critical') color = ultraColors.critical;
+                
+                // Draw trail
+                this.trail.forEach(point => {
+                    ctx.beginPath();
+                    ctx.arc(point.x, point.y, point.size * point.life, 0, Math.PI * 2);
+                    ctx.fillStyle = color + Math.floor(alpha * point.life * 60).toString(16).padStart(2, '0');
+                    ctx.fill();
+                });
+                
+                // Ultra multi-layer glow with quantum effects
+                for (let i = 0; i < 5; i++) {
+                    const layerAlpha = alpha * (0.9 - i * 0.18);
+                    const layerSize = this.size + i * 4;
+                    
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, layerSize, 0, Math.PI * 2);
+                    ctx.fillStyle = color + Math.floor(layerAlpha * 255).toString(16).padStart(2, '0');
+                    ctx.shadowBlur = 20 + i * 8;
+                    ctx.shadowColor = color;
+                    ctx.fill();
+                }
+                
+                // Quantum core blip with inner glow
+                const coreGradient = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.size);
+                coreGradient.addColorStop(0, ultraColors.bright);
+                coreGradient.addColorStop(0.7, color);
+                coreGradient.addColorStop(1, 'transparent');
+                
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fillStyle = coreGradient;
+                ctx.shadowBlur = 8;
+                ctx.shadowColor = ultraColors.bright;
+                ctx.fill();
+                
+                // Enhanced critical target rings with quantum effects
+                if (this.type === 'critical' && alpha > 0.5) {
+                    for (let ring = 1; ring <= 4; ring++) {
+                        const ringAlpha = alpha * (0.6 - ring * 0.12);
+                        const ringSize = this.size + 8 + ring * 6;
+                        
+                        ctx.beginPath();
+                        ctx.arc(this.x, this.y, ringSize, 0, Math.PI * 2);
+                        ctx.strokeStyle = color + Math.floor(ringAlpha * 255).toString(16).padStart(2, '0');
+                        ctx.lineWidth = 3 - ring * 0.6;
+                        ctx.shadowBlur = 15 + ring * 5;
+                        ctx.stroke();
+                        
+                        // Quantum dots on rings
+                        if (ring === 2) {
+                            for (let dot = 0; dot < 8; dot++) {
+                                const dotAngle = (dot * Math.PI * 2) / 8 + time * 0.005;
+                                const dotX = this.x + Math.cos(dotAngle) * ringSize;
+                                const dotY = this.y + Math.sin(dotAngle) * ringSize;
+                                
+                                ctx.beginPath();
+                                ctx.arc(dotX, dotY, 1.5, 0, Math.PI * 2);
+                                ctx.fillStyle = ultraColors.bright + Math.floor(ringAlpha * 200).toString(16).padStart(2, '0');
+                                ctx.fill();
+                            }
+                        }
+                    }
+                }
+                
+                // Warning state crosshair
+                if (this.type === 'warning' && alpha > 0.6) {
+                    const crossSize = this.size + 6;
+                    ctx.beginPath();
+                    ctx.moveTo(this.x - crossSize, this.y);
+                    ctx.lineTo(this.x + crossSize, this.y);
+                    ctx.moveTo(this.x, this.y - crossSize);
+                    ctx.lineTo(this.x, this.y + crossSize);
+                    ctx.strokeStyle = color + Math.floor(alpha * 180).toString(16).padStart(2, '0');
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                }
+            }
+        }
+
+        // HOLOGRAPHIC EFFECT CLASS
+        class HolographicEffect {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.life = Math.random() * 2 + 1;
+                this.maxLife = this.life;
+                this.size = Math.random() * 3 + 1;
+                this.color = Math.random() < 0.5 ? ultraColors.hologram : ultraColors.accent;
+                this.vx = (Math.random() - 0.5) * 2;
+                this.vy = (Math.random() - 0.5) * 2;
+            }
+
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.life -= 0.02;
+                
+                if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
+                if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
+            }
+
+            draw() {
+                if (this.life <= 0) return;
+                
+                const alpha = this.life / this.maxLife;
+                const size = this.size * alpha;
+                
+                ctx.save();
+                ctx.globalCompositeOperation = 'screen';
+                
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, size, 0, Math.PI * 2);
+                ctx.fillStyle = this.color + Math.floor(alpha * 128).toString(16).padStart(2, '0');
+                ctx.shadowBlur = 20;
+                ctx.shadowColor = this.color;
+                ctx.fill();
+                
+                ctx.restore();
+            }
+        }
+
+        // ULTRA GRID RENDERING
+        function drawUltraGrid() {
+            // Ultra background glow with enhanced layers
+            const bgGradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, maxRadius + 120);
+            bgGradient.addColorStop(0, 'rgba(0, 255, 255, 0.12)');
+            bgGradient.addColorStop(0.3, 'rgba(0, 128, 255, 0.08)');
+            bgGradient.addColorStop(0.6, 'rgba(0, 64, 255, 0.05)');
+            bgGradient.addColorStop(1, 'rgba(0, 32, 64, 0.02)');
+            ctx.fillStyle = bgGradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Additional outer glow ring
+            const outerGlow = ctx.createRadialGradient(centerX, centerY, maxRadius - 50, centerX, centerY, maxRadius + 50);
+            outerGlow.addColorStop(0, 'transparent');
+            outerGlow.addColorStop(0.7, 'rgba(0, 255, 255, 0.03)');
+            outerGlow.addColorStop(1, 'rgba(0, 255, 255, 0.08)');
+            ctx.fillStyle = outerGlow;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Ultra concentric circles
+            for (let i = 1; i <= 5; i++) {
+                const radius = i * (maxRadius / 5);
+                
+                for (let layer = 0; layer < 4; layer++) {
+                    ctx.beginPath();
+                    ctx.arc(centerX, centerY, radius + layer * 2, 0, Math.PI * 2);
+                    ctx.strokeStyle = `rgba(0, 255, 255, ${0.4 - layer * 0.1})`;
+                    ctx.lineWidth = 3 - layer * 0.5;
+                    ctx.shadowBlur = 25 + layer * 8;
+                    ctx.shadowColor = ultraColors.primary;
+                    ctx.stroke();
+                }
+            }
+
+            // Ultra crosshairs with animation
+            const crossIntensity = 0.4 + Math.sin(time * 0.008) * 0.2;
+            ctx.strokeStyle = `rgba(0, 255, 255, ${crossIntensity})`;
+            ctx.lineWidth = 2;
+            ctx.shadowBlur = 15;
+            ctx.shadowColor = ultraColors.primary;
+            
+            ctx.beginPath();
+            ctx.moveTo(0, centerY);
+            ctx.lineTo(canvas.width, centerY);
+            ctx.moveTo(centerX, 0);
+            ctx.lineTo(centerX, canvas.height);
+            ctx.stroke();
+
+            // Ultra radial lines
+            for (let angle = 0; angle < Math.PI * 2; angle += Math.PI / 12) {
+                const pulse = Math.sin(time * 0.01 + angle) * 0.3 + 0.7;
+                ctx.beginPath();
+                ctx.moveTo(centerX, centerY);
+                ctx.lineTo(
+                    centerX + Math.cos(angle) * maxRadius,
+                    centerY + Math.sin(angle) * maxRadius
+                );
+                ctx.strokeStyle = `rgba(0, 255, 255, ${0.3 * pulse})`;
+                ctx.lineWidth = 1.5;
+                ctx.shadowBlur = 8;
+                ctx.stroke();
+            }
+
+            // Ultra center with pulsing
+            for (let i = 0; i < 5; i++) {
+                const pulse = Math.sin(time * 0.02 + i * 0.5) * 0.3 + 0.7;
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, 8 - i * 1.5, 0, Math.PI * 2);
+                ctx.fillStyle = ultraColors.bright + Math.floor(pulse * (1 - i * 0.2) * 255).toString(16).padStart(2, '0');
+                ctx.shadowBlur = 30 + i * 10;
+                ctx.shadowColor = ultraColors.bright;
+                ctx.fill();
+            }
+        }
+
+        // ULTRA SWEEP BEAM - ENHANCED
+        function drawUltraSweep() {
+            ctx.save();
+            ctx.translate(centerX, centerY);
+            ctx.rotate(rotation);
+
+            // Enhanced ultra sweep layers with depth
+            for (let layer = 0; layer < 8; layer++) {
+                const intensity = 1 - (layer * 0.1);
+                const width = 12 - layer * 1.3;
+                
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.lineTo(maxRadius + 30, 0);
+                ctx.strokeStyle = `rgba(0, 255, 255, ${intensity * (0.9 - layer * 0.08)})`;
+                ctx.lineWidth = width;
+                ctx.shadowBlur = 40 + layer * 15;
+                ctx.shadowColor = ultraColors.primary;
+                ctx.stroke();
+            }
+
+            // Ultra core beam with enhanced gradient
+            const sweepGradient = ctx.createLinearGradient(0, 0, maxRadius + 40, 0);
+            sweepGradient.addColorStop(0, `${ultraColors.bright}FF`);
+            sweepGradient.addColorStop(0.1, `${ultraColors.primary}EE`);
+            sweepGradient.addColorStop(0.3, `${ultraColors.secondary}CC`);
+            sweepGradient.addColorStop(0.6, `${ultraColors.accent}88`);
+            sweepGradient.addColorStop(0.9, `${ultraColors.primary}33`);
+            sweepGradient.addColorStop(1, `${ultraColors.primary}00`);
+
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(maxRadius + 40, 0);
+            ctx.strokeStyle = sweepGradient;
+            ctx.lineWidth = 4;
+            ctx.shadowBlur = 0;
+            ctx.stroke();
+
+            // Ultra leading edge with intensity
+            const edgeIntensity = 0.9 + Math.sin(time * 0.01) * 0.1;
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(maxRadius + 50, 0);
+            ctx.strokeStyle = `rgba(255, 255, 255, ${edgeIntensity})`;
+            ctx.lineWidth = 2;
+            ctx.shadowBlur = 35;
+            ctx.shadowColor = '#FFFFFF';
+            ctx.stroke();
+
+            // Quantum scanning line effect
+            const scanLine = ctx.createLinearGradient(maxRadius - 100, 0, maxRadius + 20, 0);
+            scanLine.addColorStop(0, 'transparent');
+            scanLine.addColorStop(0.7, 'rgba(0, 255, 255, 0.4)');
+            scanLine.addColorStop(1, 'rgba(255, 255, 255, 0.8)');
+            
+            ctx.beginPath();
+            ctx.moveTo(maxRadius - 100, 0);
+            ctx.lineTo(maxRadius + 20, 0);
+            ctx.strokeStyle = scanLine;
+            ctx.lineWidth = 1;
+            ctx.stroke();
+
+            ctx.restore();
+        }
+
+        // ULTRA SWEEP AREA
+        function drawUltraSweepArea() {
+            ctx.save();
+            ctx.beginPath();
+            ctx.moveTo(centerX, centerY);
+            
+            const sweepAngle = Math.PI / 2.5; // 72 degree ultra sweep
+            ctx.arc(centerX, centerY, maxRadius + 10, rotation - sweepAngle, rotation);
+            ctx.lineTo(centerX, centerY);
+            
+            const ultraGradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, maxRadius + 10);
+            ultraGradient.addColorStop(0, 'rgba(0, 255, 255, 0.12)');
+            ultraGradient.addColorStop(0.3, 'rgba(0, 255, 255, 0.08)');
+            ultraGradient.addColorStop(0.7, 'rgba(0, 128, 255, 0.04)');
+            ultraGradient.addColorStop(1, 'rgba(0, 255, 255, 0)');
+            
+            ctx.fillStyle = ultraGradient;
+            ctx.fill();
+            ctx.restore();
+        }
+
+        // ULTRA TRAIL SYSTEM - REALISTIC FOLLOWING
+        function drawUltraTrail() {
+            const trailLength = 120; // degrees of trailing effect
+            const segments = 8; // number of trail segments
+            
+            for (let i = 0; i < segments; i++) {
+                const segmentAngle = rotation - (i * (trailLength / segments) * Math.PI / 180);
+                const intensity = 1 - (i / segments);
+                
+                ctx.save();
+                ctx.translate(centerX, centerY);
+                ctx.rotate(segmentAngle);
+                
+                // Realistic trail following sweep
+                const trailGradient = ctx.createLinearGradient(0, 0, maxRadius - 50, 0);
+                trailGradient.addColorStop(0, `rgba(0, 255, 255, ${intensity * 0.3})`);
+                trailGradient.addColorStop(0.5, `rgba(0, 255, 255, ${intensity * 0.2})`);
+                trailGradient.addColorStop(1, 'transparent');
+                
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.lineTo(maxRadius - 50, 0);
+                ctx.strokeStyle = trailGradient;
+                ctx.lineWidth = 2 + (intensity * 3);
+                ctx.shadowBlur = 15 + (intensity * 10);
+                ctx.shadowColor = ultraColors.primary;
+                ctx.stroke();
+                
+                ctx.restore();
+            }
+        }
+
+        // ULTRA HOLOGRAPHIC TEXT EFFECTS
+        function drawUltraTextEffects() {
+            textCtx.clearRect(0, 0, textCanvas.width, textCanvas.height);
+            
+            // Ultra holographic background
+            const textGradient = textCtx.createRadialGradient(centerX, centerY, 0, centerX, centerY, 250);
+            textGradient.addColorStop(0, 'rgba(0, 255, 255, 0.06)');
+            textGradient.addColorStop(0.5, 'rgba(0, 255, 128, 0.03)');
+            textGradient.addColorStop(1, 'transparent');
+            
+            textCtx.fillStyle = textGradient;
+            textCtx.fillRect(0, 0, textCanvas.width, textCanvas.height);
+
+            // Holographic scan lines
+            const scanOffset = (time * 0.02) % textCanvas.height;
+            for (let i = 0; i < 20; i++) {
+                const y = (scanOffset + i * 40) % textCanvas.height;
+                textCtx.fillStyle = `rgba(0, 255, 255, ${0.1 - i * 0.005})`;
+                textCtx.fillRect(0, y, textCanvas.width, 2);
+            }
+        }
+
+        // MAIN ULTRA LOOP
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            time += 16;
+
+            // Ultra effects in order
+            drawUltraGrid();
+            drawUltraSweepArea();
+            drawUltraTrail();
+            drawUltraSweep();
+
+            // Spawn ultra blips
+            if (Math.random() < 0.02) {
+                ultraBlips.push(new UltraBlip());
+            }
+
+            // Spawn holographic effects
+            if (Math.random() < 0.15) {
+                holographicEffects.push(new HolographicEffect());
+            }
+
+            // Update and draw ultra blips with sweep interaction
+            ultraBlips = ultraBlips.filter(blip => {
+                blip.update();
+                
+                // Calculate distance from sweep line
+                const dx = blip.x - centerX;
+                const dy = blip.y - centerY;
+                const blipAngle = Math.atan2(dy, dx);
+                let angleDiff = Math.abs(blipAngle - rotation);
+                
+                // Normalize angle difference
+                if (angleDiff > Math.PI) angleDiff = 2 * Math.PI - angleDiff;
+                
+                // Pulse effect when sweep passes over blip
+                const pulseDistance = 0.15; // radians (about 8.6 degrees)
+                if (angleDiff < pulseDistance) {
+                    const pulseIntensity = 1 - (angleDiff / pulseDistance);
+                    blip.pulsePhase += pulseIntensity * 0.5; // Boost pulse animation
+                }
+                
+                blip.draw();
+                return blip.intensity > 0;
+            });
+
+            // Update and draw holographic effects
+            holographicEffects = holographicEffects.filter(effect => {
+                effect.update();
+                effect.draw();
+                return effect.life > 0;
+            });
+
+            // Ultra rotation with dynamic speed
+            const speedMultiplier = 1 + Math.sin(time * 0.003) * 0.3;
+            rotation += 0.018 * speedMultiplier;
+            if (rotation >= Math.PI * 2) rotation = 0;
+
+            drawUltraTextEffects();
+            requestAnimationFrame(draw);
+        }
+
+        // INITIALIZE ULTRA RADAR
+        draw();
+        
+        // Fade in effect
+        window.onload = function() {
+            document.body.style.opacity = '1';
+        };
+    </script>
+</body>
+</html>

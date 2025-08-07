@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arena Watcher - EXTREME Loading</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: transparent;
+            overflow: hidden;
+            font-family: 'Arial', sans-serif;
+            opacity: 0;
+            transition: opacity 6s ease-in-out;
+        }
+
+        .radar-container {
+            position: relative;
+            width: 600px;
+            height: 600px;
+            transform: scale(0.85);
+            transform-origin: center center;
+            z-index: 1;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(65, 105, 225, 0.08) 0%, rgba(15, 23, 42, 0.98) 70%);
+            border: 2px solid #4169E1;
+            box-shadow: 
+                0 0 40px rgba(65, 105, 225, 0.4),
+                inset 0 0 40px rgba(65, 105, 225, 0.15),
+                0 0 80px rgba(65, 105, 225, 0.2);
+            animation: subtlePulse 8s ease-in-out infinite;
+        }
+
+        @keyframes subtlePulse {
+            0%, 100% { 
+                transform: scale(1);
+                box-shadow: 
+                    0 0 40px rgba(65, 105, 225, 0.4),
+                    inset 0 0 40px rgba(65, 105, 225, 0.15),
+                    0 0 80px rgba(65, 105, 225, 0.2);
+            }
+            50% { 
+                transform: scale(1.02);
+                box-shadow: 
+                    0 0 50px rgba(65, 105, 225, 0.5),
+                    inset 0 0 50px rgba(65, 105, 225, 0.2),
+                    0 0 100px rgba(65, 105, 225, 0.3);
+            }
+        }
+
+        .radar-container canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 2;
+            background: transparent;
+            border-radius: 50%;
+        }
+
+        .radar-container img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 3;
+            width: 100%;
+            height: 100%;
+            opacity: 0.3;
+            border-radius: 50%;
+            animation: gridGlow 12s ease-in-out infinite;
+        }
+
+        @keyframes gridGlow {
+            0%, 100% { 
+                opacity: 0.35;
+                filter: brightness(1) hue-rotate(0deg);
+            }
+            50% { 
+                opacity: 0.45;
+                filter: brightness(1.15) hue-rotate(10deg);
+            }
+        }
+
+        .radar-text-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 600px;
+            height: 600px;
+            z-index: 10;
+        }
+
+        .radar-text-container canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 11;
+            background: transparent;
+        }
+
+        .radar-text-container img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 12;
+            width: 100%;
+            height: 100%;
+            opacity: 0.75;
+            animation: textGlow 10s ease-in-out infinite;
+        }
+
+        @keyframes textGlow {
+            0%, 100% { 
+                filter: drop-shadow(0 0 12px rgba(65, 105, 225, 0.6)) drop-shadow(0 0 24px rgba(65, 105, 225, 0.3));
+                opacity: 0.75;
+            }
+            50% { 
+                filter: drop-shadow(0 0 18px rgba(96, 165, 250, 0.8)) drop-shadow(0 0 36px rgba(96, 165, 250, 0.4));
+                opacity: 0.85;
+            }
+        }
+
+
+
+        .extreme-effects {
+            position: absolute;
+            top: -75px;
+            left: -75px;
+            width: 750px;
+            height: 750px;
+            z-index: 0;
+            pointer-events: none;
+            border-radius: 50%;
+            background: radial-gradient(circle at center, 
+                transparent 60%, 
+                rgba(65, 105, 225, 0.08) 80%, 
+                rgba(30, 58, 138, 0.12) 90%, 
+                rgba(65, 105, 225, 0.15) 100%);
+            animation: subtleRotate 40s linear infinite;
+        }
+
+        @keyframes subtleRotate {
+            0% { 
+                transform: rotate(0deg);
+                opacity: 0.8;
+            }
+            50% {
+                opacity: 1;
+            }
+            100% { 
+                transform: rotate(360deg);
+                opacity: 0.8;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="radar-container">
+        <canvas id="radarCanvas" width="600" height="600"></canvas>
+        <img src="grid.png" alt="Arena Watcher Grid" width="600" height="600">
+        
+        <div class="radar-text-container">
+            <canvas id="radarTextCanvas" width="600" height="600"></canvas>
+            <img src="text.png" alt="Arena Watcher Text" width="600" height="600">
+        </div>
+        
+        <div class="extreme-effects"></div>
+    </div>
+
+    <script>
+        // REALISTIC MILITARY-GRADE RADAR - STUNNING BUT BELIEVABLE
+        const canvas = document.getElementById('radarCanvas');
+        const ctx = canvas.getContext('2d');
+        const textCanvas = document.getElementById('radarTextCanvas');
+        const textCtx = textCanvas.getContext('2d');
+        
+        const centerX = 300;
+        const centerY = 300;
+        const maxRadius = 285;
+        
+        let time = 0;
+        let rotation = 0;
+        let sweepTrail = [];
+        let radarBlips = [];
+        let interferenceNoise = [];
+        let scanPulses = [];
+
+        // DEEP INDIGO BLUE COLOR PALETTE
+        const radarColors = {
+            primary: '#4169E1',      // Royal blue
+            secondary: '#1E3A8A',    // Deep blue
+            accent: '#60A5FA',       // Light blue
+            bright: '#93C5FD',       // Bright blue
+            warning: '#F59E0B',      // Amber warning
+            critical: '#EF4444',     // Red alert
+            background: '#0F172A',   // Deep slate background
+            grid: '#1E293B',         // Grid lines
+            sweep: '#4169E180'       // Semi-transparent sweep
+        };
+
+        // RADAR BLIP CLASS - REALISTIC TARGETS
+        class RadarBlip {
+            constructor() {
+                // Random position within radar range
+                const angle = Math.random() * Math.PI * 2;
+                const distance = Math.random() * maxRadius * 0.9;
+                this.x = centerX + Math.cos(angle) * distance;
+                this.y = centerY + Math.sin(angle) * distance;
+                
+                this.size = Math.random() * 3 + 2;
+                this.intensity = 1.0;
+                this.fadeRate = Math.random() * 0.008 + 0.002;
+                this.pulsePhase = Math.random() * Math.PI * 2;
+                this.type = Math.random() < 0.1 ? 'critical' : (Math.random() < 0.3 ? 'warning' : 'normal');
+                
+                // Slight movement for realism
+                this.vx = (Math.random() - 0.5) * 0.5;
+                this.vy = (Math.random() - 0.5) * 0.5;
+            }
+
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.intensity -= this.fadeRate;
+                this.pulsePhase += 0.1;
+                
+                // Keep within bounds
+                const distFromCenter = Math.sqrt((this.x - centerX) ** 2 + (this.y - centerY) ** 2);
+                if (distFromCenter > maxRadius) {
+                    this.intensity = 0;
+                }
+            }
+
+            draw() {
+                const pulse = Math.sin(this.pulsePhase) * 0.3 + 0.7;
+                const alpha = this.intensity * pulse;
+                
+                let color = radarColors.primary;
+                if (this.type === 'warning') color = radarColors.warning;
+                if (this.type === 'critical') color = radarColors.critical;
+                
+                // Draw blip with glow effect
+                for (let i = 0; i < 3; i++) {
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.size + i * 2, 0, Math.PI * 2);
+                    ctx.fillStyle = color + Math.floor(alpha * (1 - i * 0.3) * 255).toString(16).padStart(2, '0');
+                    ctx.shadowBlur = 8 + i * 4;
+                    ctx.shadowColor = color;
+                    ctx.fill();
+                }
+                
+                // Draw range rings for critical targets
+                if (this.type === 'critical' && alpha > 0.5) {
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.size + 15, 0, Math.PI * 2);
+                    ctx.strokeStyle = radarColors.critical + '40';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                }
+            }
+        }
+
+        // INTERFERENCE NOISE CLASS - REALISTIC STATIC
+        class InterferenceNoise {
+            constructor() {
+                this.x = Math.random() * 600;
+                this.y = Math.random() * 600;
+                this.life = Math.random() * 0.5 + 0.1;
+                this.intensity = Math.random() * 0.3;
+            }
+
+            update() {
+                this.life -= 0.02;
+                this.x += (Math.random() - 0.5) * 2;
+                this.y += (Math.random() - 0.5) * 2;
+            }
+
+            draw() {
+                if (this.life <= 0) return;
+                
+                ctx.fillStyle = radarColors.primary + Math.floor(this.life * this.intensity * 255).toString(16).padStart(2, '0');
+                ctx.fillRect(this.x, this.y, 1, 1);
+            }
+        }
+
+        // SCAN PULSE CLASS - REALISTIC RADAR PULSES
+        class ScanPulse {
+            constructor() {
+                this.radius = 0;
+                this.maxRadius = maxRadius;
+                this.speed = 4;
+                this.intensity = 1.0;
+                this.thickness = 3;
+            }
+
+            update() {
+                this.radius += this.speed;
+                this.intensity = 1 - (this.radius / this.maxRadius);
+            }
+
+            draw() {
+                if (this.intensity <= 0) return;
+                
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, this.radius, 0, Math.PI * 2);
+                ctx.strokeStyle = radarColors.accent + Math.floor(this.intensity * 128).toString(16).padStart(2, '0');
+                ctx.lineWidth = this.thickness;
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = radarColors.accent;
+                ctx.stroke();
+            }
+        }
+
+        // ENHANCED GRID RENDERING
+        function drawEnhancedGrid() {
+            // Draw range circles with enhanced styling
+            for (let i = 1; i <= 4; i++) {
+                const radius = i * (maxRadius / 4);
+                
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+                
+                const gradient = ctx.createRadialGradient(
+                    centerX, centerY, radius - 2,
+                    centerX, centerY, radius + 2
+                );
+                gradient.addColorStop(0, 'transparent');
+                gradient.addColorStop(0.4, radarColors.grid + '60');
+                gradient.addColorStop(0.6, radarColors.primary + '90');
+                gradient.addColorStop(1, 'transparent');
+                
+                ctx.strokeStyle = gradient;
+                ctx.lineWidth = 2.5;
+                ctx.shadowBlur = 8;
+                ctx.shadowColor = radarColors.primary;
+                ctx.stroke();
+                
+                // Add subtle inner glow
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+                ctx.strokeStyle = radarColors.accent + '30';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+            }
+            
+            // Draw bearing lines (every 30 degrees) with enhanced styling
+            for (let angle = 0; angle < 360; angle += 30) {
+                const radian = (angle * Math.PI) / 180;
+                const x2 = centerX + Math.cos(radian) * maxRadius;
+                const y2 = centerY + Math.sin(radian) * maxRadius;
+                
+                ctx.beginPath();
+                ctx.moveTo(centerX, centerY);
+                ctx.lineTo(x2, y2);
+                ctx.strokeStyle = radarColors.grid + '50';
+                ctx.lineWidth = 1.5;
+                ctx.shadowBlur = 3;
+                ctx.shadowColor = radarColors.primary;
+                ctx.stroke();
+            }
+            
+            // Add center point with enhanced glow
+            for (let i = 0; i < 3; i++) {
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, 4 - i, 0, Math.PI * 2);
+                ctx.fillStyle = radarColors.bright + Math.floor((1 - i * 0.3) * 255).toString(16).padStart(2, '0');
+                ctx.shadowBlur = 15 + i * 5;
+                ctx.shadowColor = radarColors.bright;
+                ctx.fill();
+            }
+        }
+
+        // ENHANCED SWEEP BEAM
+        function drawRealisticSweep() {
+            ctx.save();
+            ctx.translate(centerX, centerY);
+            ctx.rotate(rotation);
+            
+            // Main sweep beam with enhanced gradient
+            const sweepGradient = ctx.createLinearGradient(0, 0, maxRadius, 0);
+            sweepGradient.addColorStop(0, radarColors.bright + 'FF');
+            sweepGradient.addColorStop(0.1, radarColors.primary + 'DD');
+            sweepGradient.addColorStop(0.4, radarColors.accent + '99');
+            sweepGradient.addColorStop(0.7, radarColors.secondary + '55');
+            sweepGradient.addColorStop(1, radarColors.primary + '00');
+            
+            // Draw multiple sweep layers for depth
+            for (let layer = 0; layer < 3; layer++) {
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.lineTo(maxRadius - layer * 20, 0);
+                ctx.strokeStyle = sweepGradient;
+                ctx.lineWidth = 8 - layer * 2;
+                ctx.shadowBlur = 20 + layer * 5;
+                ctx.shadowColor = radarColors.bright;
+                ctx.stroke();
+            }
+            
+            // Enhanced sweep trail effect
+            for (let i = 1; i < 25; i++) {
+                const trailAngle = -i * 0.04;
+                const trailAlpha = Math.max(0, 1 - i * 0.06);
+                const pulse = Math.sin(time * 0.01 + i * 0.2) * 0.2 + 0.8;
+                
+                ctx.save();
+                ctx.rotate(trailAngle);
+                
+                const trailGradient = ctx.createLinearGradient(0, 0, maxRadius - i * 15, 0);
+                trailGradient.addColorStop(0, radarColors.accent + Math.floor(trailAlpha * pulse * 120).toString(16).padStart(2, '0'));
+                trailGradient.addColorStop(0.5, radarColors.primary + Math.floor(trailAlpha * pulse * 80).toString(16).padStart(2, '0'));
+                trailGradient.addColorStop(1, radarColors.secondary + '00');
+                
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.lineTo(maxRadius - i * 15, 0);
+                ctx.strokeStyle = trailGradient;
+                ctx.lineWidth = Math.max(0.5, 7 - i * 0.25);
+                ctx.shadowBlur = Math.max(2, 12 - i * 0.4);
+                ctx.shadowColor = radarColors.accent;
+                ctx.stroke();
+                
+                ctx.restore();
+            }
+            
+            ctx.restore();
+        }
+
+        // MAIN ANIMATION LOOP
+        function draw() {
+            // Clear canvas with slight persistence for trails
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            time += 16;
+            
+            // Set blend mode for realistic effects
+            ctx.globalCompositeOperation = 'source-over';
+            
+            // Draw enhanced grid
+            drawEnhancedGrid();
+            
+            // Draw realistic sweep
+            drawRealisticSweep();
+            
+            // Spawn radar blips occasionally
+            if (Math.random() < 0.015) {
+                radarBlips.push(new RadarBlip());
+            }
+            
+            // Spawn interference noise
+            if (Math.random() < 0.1) {
+                for (let i = 0; i < 5; i++) {
+                    interferenceNoise.push(new InterferenceNoise());
+                }
+            }
+            
+            // Spawn scan pulses occasionally
+            if (Math.random() < 0.03) {
+                scanPulses.push(new ScanPulse());
+            }
+            
+            // Update and draw radar blips
+            radarBlips = radarBlips.filter(blip => {
+                blip.update();
+                blip.draw();
+                return blip.intensity > 0;
+            });
+            
+            // Update and draw interference
+            interferenceNoise = interferenceNoise.filter(noise => {
+                noise.update();
+                noise.draw();
+                return noise.life > 0;
+            });
+            
+            // Update and draw scan pulses
+            scanPulses = scanPulses.filter(pulse => {
+                pulse.update();
+                pulse.draw();
+                return pulse.intensity > 0;
+            });
+            
+            // Update rotation with realistic speed
+            rotation += 0.02;
+            if (rotation >= Math.PI * 2) rotation = 0;
+            
+            requestAnimationFrame(draw);
+        }
+
+        // TEXT CANVAS EFFECTS - SUBTLE ENHANCEMENT
+        function drawTextEffects() {
+            textCtx.clearRect(0, 0, textCanvas.width, textCanvas.height);
+            
+            // Subtle background glow
+            const textGradient = textCtx.createRadialGradient(centerX, centerY, 0, centerX, centerY, 200);
+            textGradient.addColorStop(0, 'rgba(0, 255, 65, 0.03)');
+            textGradient.addColorStop(0.5, 'rgba(0, 255, 65, 0.01)');
+            textGradient.addColorStop(1, 'transparent');
+            
+            textCtx.fillStyle = textGradient;
+            textCtx.fillRect(0, 0, textCanvas.width, textCanvas.height);
+            
+            requestAnimationFrame(drawTextEffects);
+        }
+
+        // INITIALIZE REALISTIC RADAR
+        draw();
+        drawTextEffects();
+        
+        // FADE IN ONLY - NO FADE OUT
+        window.onload = function() {
+            document.body.style.opacity = '1';
+        };
+    </script>
+</body>
+</html>
